@@ -18,6 +18,18 @@ class ProjectsTest extends TestCase
 
     /**
      * @test
+     * Auth Middleware 타기 때문에 글을 작성 시 로그인이 안되어 있으면 로그인 페이지로 보낸다.
+     */
+    public function only_authenticated_users_can_create_projects ()
+    {
+        // factory 에서 만든 의미있는 데이터를 가져옴.
+        $attributes = factory('App\Project')->raw();
+
+        $this->post('/projects', $attributes)->assertRedirect('login');
+    }
+
+    /**
+     * @test
      * ProjectsController 가 제대로 작동 해주는지 확인
      */
     public function a_user_can_create_a_project ()
@@ -25,22 +37,23 @@ class ProjectsTest extends TestCase
         // 라라벨 에러 핸들링을 타겠다
         $this->withExceptionHandling();
 
-        // 내가 테스트 할 배열
-        $attrbutes = [
+        $this->actingAs(factory('App\User')->create());
+
+        // 내가 테스트 할 배열 :: 내가 적은 게시글 제목과 내용
+        $attributes = [
             'title' => $this->faker->sentence,
             'description' => $this->faker->paragraph
         ];
 
-        // post '/projects' uri 로 요청을 하고, $attrbutes 안에 있는 값을 보낸 후, 응답이 주어진 URI 로 리다이렉트
-        // assertRedirect 은 라우터에서 ProjectsController->store 로 간 뒤 /projects 로 리턴하는 데 이게 잘 되는지 체크하는 것
-        $this->post('/projects', $attrbutes)->assertRedirect('/projects');
+        // post '/projects' uri 로 요청을 하고, $attributes 안에 있는 값을 보낸 후, 응답이 주어진 URI 로 리다이렉트
+        // assertRedirect 은 라우터에서 ProjectsController->store 로 간 뒤 /projects 로 리턴하는 데 이게 잘 되는지 체크하는 것 :: 리스트로 잘 빠지는지
+        $this->post('/projects', $attributes)->assertRedirect('/projects');
 
-        // projects 테이블에 $attrbutes 에서 생성된 페이커 데이터와 같은 값이 있는 지 체크
-        $this->assertDatabaseHas('projects', $attrbutes);
+        // projects 테이블에 $attributes 에서 생성된 페이커 데이터와 같은 값이 있는 지 체크 :: 데이터 잘 들어갔는지 확인 과정
+        $this->assertDatabaseHas('projects', $attributes);
 
-        // get '/projects' uri 로 요청을 하고, $attrbutes 안에 있는 문자열이 응답 내에 포함 되어 있다고 가정
-        // 등록 한 내용이 리스트에 타이틀로 잘 나오나 체크
-        $this->get('/projects')->assertSee($attrbutes['title']);
+        // get '/projects' uri 로 요청을 하고, $attributes 안에 있는 문자열이 응답 내에 포함 되어 있다고 가정 :: 등록 한 내용이 리스트에 타이틀로 잘 나오나 체크
+        $this->get('/projects')->assertSee($attributes['title']);
     }
 
     /**
@@ -65,7 +78,10 @@ class ProjectsTest extends TestCase
      */
     public function a_project_requires_a_title ()
     {
-        // 팩토리에서 생성된 데이터 체크 (터미널에 php artisan tinker 해서 활성화 후 factory('App\Project')->make() 치면 어떤 데이터가 들어갈지 미리 확인 가능 )
+        // 현재 로그인 한 사용자를 설정
+        $this->actingAs(factory('App\User')->create());
+
+        // 지정된 모델의 raw 속성 배열 가져옴 (터미널에 php artisan tinker 해서 활성화 후 factory('App\Project')->make() 치면 어떤 데이터가 들어갈지 미리 확인 가능 )
         $attributes = factory('App\Project')->raw(['title' => '']);
 
         // 세션에 주어진 필드에 오류가 있는지 체크. validate 설정 되어 있어야 함.
@@ -78,8 +94,10 @@ class ProjectsTest extends TestCase
      */
     public function a_project_requires_a_description ()
     {
-        $arrtibutes = factory('App\Project')->raw(['description' => '']);
+        $this->actingAs(factory('App\User')->create());
 
-        $this->post('/projects', $arrtibutes)->assertSessionHasErrors('description');
+        $attributes = factory('App\Project')->raw(['description' => '']);
+
+        $this->post('/projects', $attributes)->assertSessionHasErrors('description');
     }
 }
