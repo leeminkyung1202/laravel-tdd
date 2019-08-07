@@ -36,4 +36,10 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function projects ()
+    {
+        // projects 테이블에 users 테이블의 id 가 들어간다. (중복 가능 1:*)
+        return $this->hasMany(Project::class, 'owner_id');
+    }
 }
