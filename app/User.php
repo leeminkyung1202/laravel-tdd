@@ -39,7 +39,7 @@ class User extends Authenticatable
 
     public function projects ()
     {
-        // projects 테이블에 users 테이블의 id 가 들어간다. (중복 가능 1:*)
+        // projects 테이블에 users 테이블의 id 가 들어간다. auth()->user() 로 인해서 내 정보 전달 (중복 가능 1:*)
         return $this->hasMany(Project::class, 'owner_id');
     }
 }

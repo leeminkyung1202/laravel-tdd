@@ -20,12 +20,33 @@ class ProjectsTest extends TestCase
      * @test
      * Auth Middleware 타기 때문에 글을 작성 시 로그인이 안되어 있으면 로그인 페이지로 보낸다.
      */
-    public function only_authenticated_users_can_create_projects ()
+    public function guests_cannot_create_projects ()
     {
         // factory 에서 만든 의미있는 데이터를 가져옴.
         $attributes = factory('App\Project')->raw();
 
+        // auth 권한 체크해서 로그인 안되어있으면 login 페이지로 보내는지 확인.
         $this->post('/projects', $attributes)->assertRedirect('login');
+    }
+
+    /**
+     * @test
+     * 내가 로그인 한 id 와 글을 작성한 작성이의 id 가 같지 않으면 403 에러를 보여준다.
+     */
+    public function guests_cannot_view_projects()
+    {
+        $this->get('/projects')->assertRedirect('login');
+    }
+
+    /**
+     * @test
+     * 뷰 페이지 경로가 있는지 체크
+     */
+    public function guests_cannot_view_a_single_project()
+    {
+        $project = factory('App\Project')->create();
+
+        $this->get($project->path())->assertRedirect('login');
     }
 
     /**
@@ -59,18 +80,34 @@ class ProjectsTest extends TestCase
 
     /**
      * @test
-     * View 페이지에 값이 잘 들어가는지 확인
+     * View 페이지에 값이 잘 들어가는지 확인 (View 잘 보이는지)
      */
-    public function a_user_can_view_a_project()
+    public function a_user_can_view_their_project()
     {
+        // 팩토리에서 생성된 유저를 현재 로그인 한 사용자로 설정 하겠다.
+        $this->be(factory('App\User')->create());
+
         // 테스트에 대한 예외 처리를 비활성화
         $this->withoutExceptionHandling();
 
-        $project = factory('App\Project')->create();
+        $project = factory('App\Project')->create(['owner_id' => auth()->id()]);
 
         $this->get($project->path())
             ->assertSee($project->title)
             ->assertSee($project->description);
+    }
+
+    /**
+     * @test
+     * 다른 사람이 작성한 글은 못보고 내가 작성한 글만 볼 수 있다.
+     */
+    public function an_authenticated_user_cannot_view_the_projects_of_others ()
+    {
+        $this->be(factory('App\User')->create());
+
+        $project = factory('App\Project')->create();
+
+        $this->get($project->path())->assertStatus(403);
     }
 
     /**
