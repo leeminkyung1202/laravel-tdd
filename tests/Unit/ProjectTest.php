@@ -12,6 +12,7 @@ class ProjectTest extends TestCase
 
     /**
      * @test
+     * URL 이 올바른지 체크
      */
     public function it_has_a_path()
     {

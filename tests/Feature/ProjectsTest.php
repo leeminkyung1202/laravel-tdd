@@ -37,6 +37,7 @@ class ProjectsTest extends TestCase
         // 라라벨 에러 핸들링을 타겠다
         $this->withExceptionHandling();
 
+        // 현재 로그인 한 사용자를 설정
         $this->actingAs(factory('App\User')->create());
 
         // 내가 테스트 할 배열 :: 내가 적은 게시글 제목과 내용

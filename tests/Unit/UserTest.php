@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use mysql_xdevapi\Collection;
+use Illuminate\Database\Eloquent\Collection;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,14 +14,14 @@ class UserTest extends TestCase
 
     /**
      * @test
-     * 사용자 id 가 있음을 확인
+     * projects 테이블에 insert 시 사용자 id 가 있는지 체크
      */
     public function a_user_has_projects ()
     {
         $user = factory('App\User')->create();
 
-        // assertInstanceOf 변수가 주어진 유형임을 확인. Collection 관계에 있는 모든 멀티 레코드 결과 값을 봄.
-        // assertInstanceOf 여기서 에러남. 운동 뒤에 확인 필요
+        // assertInstanceOf 변수가 주어진 유형임을 확인. Collection 배열이나 객체를 좀 더 효율적으로 쓸수 있게 해줌.
+        // User 모델의 projects 함수가 잘 동작하는지 체크
         $this->assertInstanceOf(Collection::class, $user->projects);
     }
 }
