@@ -11,42 +11,25 @@ use Illuminate\Foundation\Testing\WithFaker;
 // 테스트 전에 데이터베이스 마이그레이션 하기 위한 거.
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class ProjectsTest extends TestCase
+class ManageProjectsTest extends TestCase
 {
     // 위에 선언 해줬는데 왜 또 여기서 use 한 이유는 WithFaker, RefreshDatabase 메소드들 전부 ProjectsTest class 꺼가 된다.
     use WithFaker, RefreshDatabase;
 
     /**
      * @test
-     * Auth Middleware 타기 때문에 글을 작성 시 로그인이 안되어 있으면 로그인 페이지로 보낸다.
+     * Auth Middleware 타기 때문에 글을 작성 시 로그인이 안되어 있으면 로그인 페이지로 보낸다. 경로가 있는지 체크
      */
-    public function guests_cannot_create_projects ()
-    {
-        // factory 에서 만든 의미있는 데이터를 가져옴.
-        $attributes = factory('App\Project')->raw();
-
-        // auth 권한 체크해서 로그인 안되어있으면 login 페이지로 보내는지 확인.
-        $this->post('/projects', $attributes)->assertRedirect('login');
-    }
-
-    /**
-     * @test
-     * 내가 로그인 한 id 와 글을 작성한 작성이의 id 가 같지 않으면 403 에러를 보여준다.
-     */
-    public function guests_cannot_view_projects()
-    {
-        $this->get('/projects')->assertRedirect('login');
-    }
-
-    /**
-     * @test
-     * 뷰 페이지 경로가 있는지 체크
-     */
-    public function guests_cannot_view_a_single_project()
+    public function guests_cannot_manage_projects ()
     {
         $project = factory('App\Project')->create();
 
+        $this->get('/projects')->assertRedirect('login');
         $this->get($project->path())->assertRedirect('login');
+        $this->get('/projects/create')->assertRedirect('login');
+
+        // toArray 는 컬렉션을 일반 php 로 변환
+        $this->post('/projects', $project->toArray())->assertRedirect('login');
     }
 
     /**
@@ -56,10 +39,12 @@ class ProjectsTest extends TestCase
     public function a_user_can_create_a_project ()
     {
         // 라라벨 에러 핸들링을 타겠다
-        $this->withExceptionHandling();
+        $this->withoutExceptionHandling();
 
         // 현재 로그인 한 사용자를 설정
         $this->actingAs(factory('App\User')->create());
+
+        $this->get('/projects/create')->assertStatus(200);
 
         // 내가 테스트 할 배열 :: 내가 적은 게시글 제목과 내용
         $attributes = [
